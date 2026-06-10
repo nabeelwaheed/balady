@@ -432,8 +432,8 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
 .hero-sun-disc {
   position: absolute;
   left: 13%; top: 26%;
-  width: 440px; height: 440px;
-  max-width: 90vw;
+  width: min(440px, 78vw);
+  height: min(440px, 78vw);
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(circle,
@@ -965,6 +965,10 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
   .hero { padding: 94px 20px 56px; }
   .hero-title { font-size: 54px; letter-spacing: 0.03em; }
   .hero-eyebrow { margin-bottom: 22px; }
+
+  /* Show the full desert horizon (all pyramids), not a cropped slice */
+  .hero-pyramids, .hero-dunes { height: auto; }
+  .hero-sun-disc { left: 30%; top: 20%; }
   .hero-subtitle { font-size: 14px; letter-spacing: 0.3em; }
   .hero-tagline { font-size: 15px; margin-bottom: 32px; }
   .hero-ctas { flex-direction: column; align-items: stretch; max-width: 280px; margin: 0 auto; }
@@ -1198,7 +1202,7 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
           <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19 C9.5 14 9.5 10 12 6 C14.5 10 14.5 14 12 19 Z"/><path d="M12 19 C7 15 4 11 4 8 C8 9 10.5 14 12 19 Z"/><path d="M12 19 C17 15 20 11 20 8 C16 9 13.5 14 12 19 Z"/></svg>Desserts</button>
       </div>
 
-      <p class="menu-note">Prices in USD &middot; <strong>/pp</strong> = per person &middot; <strong>(n)</strong> = serves n &middot; trays &amp; kilo portions noted per item</p>
+      <p class="menu-note">Prices in CAD &middot; <strong>/pp</strong> = per person &middot; <strong>(n)</strong> = serves n &middot; trays &amp; kilo portions noted per item</p>
 
       <!-- PASTRIES -->
       <div class="menu-grid reveal" data-grid="pastries" role="tabpanel">
@@ -1647,31 +1651,45 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  // ===== Hero parallax (sun · pyramids · stars) — desktop only =====
+  // ===== Hero parallax (sun · pyramids · stars) — wide screens only =====
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const isWide = window.matchMedia('(min-width: 900px)').matches;
+  const wideQuery = window.matchMedia('(min-width: 900px)');
   const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  if (!prefersReduced && isWide) {
-    const sun = document.querySelector('.hero-sun-disc');
-    const pyramids = document.querySelector('.hero-pyramids');
-    const dunes = document.querySelector('.hero-dunes');
-    const stars = document.querySelector('.hero-stars');
-    let ticking = false;
-    const parallax = () => {
-      const y = window.scrollY;
-      if (y <= window.innerHeight) {
-        if (sun) sun.style.transform = 'translate(-50%, calc(-50% + ' + (y * 0.28) + 'px))';
-        if (pyramids) pyramids.style.transform = 'translateY(' + (y * 0.12) + 'px)';
-        if (dunes) dunes.style.transform = 'translateY(' + (y * 0.22) + 'px)';
-        if (stars) stars.style.transform = 'translateY(' + (y * 0.4) + 'px)';
-      }
-      ticking = false;
-    };
-    window.addEventListener('scroll', () => {
-      if (!ticking) { window.requestAnimationFrame(parallax); ticking = true; }
-    }, { passive: true });
-  }
+  const sun = document.querySelector('.hero-sun-disc');
+  const pyramids = document.querySelector('.hero-pyramids');
+  const dunes = document.querySelector('.hero-dunes');
+  const stars = document.querySelector('.hero-stars');
+  const heroLayers = [sun, pyramids, dunes, stars];
+
+  const clearParallax = () => {
+    heroLayers.forEach((el) => { if (el) el.style.transform = ''; });
+  };
+
+  let pTicking = false;
+  let parallaxActive = false;
+  const parallax = () => {
+    pTicking = false;
+    // Re-evaluate live so resize / zoom / orientation changes recover cleanly
+    if (prefersReduced || !wideQuery.matches) {
+      if (parallaxActive) { clearParallax(); parallaxActive = false; }
+      return;
+    }
+    parallaxActive = true;
+    const y = window.scrollY;
+    if (y > window.innerHeight) return;
+    if (sun) sun.style.transform = 'translate(-50%, calc(-50% + ' + (y * 0.28) + 'px))';
+    if (pyramids) pyramids.style.transform = 'translateY(' + (y * 0.12) + 'px)';
+    if (dunes) dunes.style.transform = 'translateY(' + (y * 0.22) + 'px)';
+    if (stars) stars.style.transform = 'translateY(' + (y * 0.4) + 'px)';
+  };
+  const requestParallax = () => {
+    if (!pTicking) { window.requestAnimationFrame(parallax); pTicking = true; }
+  };
+  window.addEventListener('scroll', requestParallax, { passive: true });
+  window.addEventListener('resize', () => { clearParallax(); requestParallax(); }, { passive: true });
+  window.addEventListener('orientationchange', () => { clearParallax(); requestParallax(); });
+  parallax();
 
   // ===== Magnetic buttons — hover-capable devices only =====
   if (!prefersReduced && canHover) {

@@ -52,6 +52,8 @@ html {
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: clip;
+  max-width: 100%;
 }
 body {
   margin: 0;
@@ -63,6 +65,7 @@ body {
   line-height: 1.6;
   overflow-x: clip;
   width: 100%;
+  max-width: 100%;
 }
 img, svg { display: block; max-width: 100%; }
 button { font-family: inherit; cursor: pointer; }
@@ -236,7 +239,7 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transform: scale(1.02);
+  transform: scale(0.98);
   pointer-events: none;
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
